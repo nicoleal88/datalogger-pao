@@ -145,7 +145,7 @@ ax.xaxis.set_major_formatter(xfmt)
 #manager.full_screen_toggle()
 #manager.resize(*manager.window.maxsize())
 
-plotName = str(args.File)[:-4] + ".png"
+plotName = str(args.File)[:-4] + ".pdf"
 #print plotName
 plt.tight_layout()
 plt.savefig(plotName, dpi=200)
