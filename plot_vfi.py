@@ -32,8 +32,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument("File", help="File you want to plot")
 parser.add_argument("-e", "--events", help="this option plots the events",
                     action="store_true")
+parser.add_argument("-r", "--resolution", type=int, 
+                    help="Skip # data for faster plotting")
 args = parser.parse_args()
 
+
+# File opened, sorted and saved as a temporary file: args.File+'s'
 with open(args.File, 'r') as File:
     lines = [line.split() for line in File]
     lines.sort()
@@ -60,8 +64,6 @@ iN = []
 os.remove(args.File+'s')
 
 plotEvents = args.events
-
-print plotEvents
 
 for line in file:
     data = line.split()
@@ -99,7 +101,10 @@ date_range = "Log from " + str(init_date) + " to " + str(end_date)
 f, axarr = plt.subplots(2, sharex=True)
 plt.xticks(rotation=25)
 
-axarr[0].plot(date_list, vR, 'r', date_list, vS, 'g', date_list, vT, 'b')
+jump = args.resolution
+
+axarr[0].plot(date_list[::jump], vR[::jump], 'r', date_list[::jump], vS[::jump],
+              'g', date_list[::jump], vT[::jump], 'b')
 axarr[0].set_title(date_range)
 axarr[0].set_ylabel('vRMS')
 # axarr[0].set_ylim(v_ylim_inf, v_ylim_sup)
@@ -120,7 +125,7 @@ axarr[1].grid('on')
 axarr[1].set_ylabel('Frequency')
 axarr[1].set_ylim(f_ylim_inf, f_ylim_sup)
 
-axarr[1].plot(date_list, fr, color='black')
+axarr[1].plot(date_list[::jump], fr[::jump], color='black')
 axarr[1].grid('on')
 l = axarr[1].axhline(y=52, color='red')
 l = axarr[1].axhline(y=47, color='red')
