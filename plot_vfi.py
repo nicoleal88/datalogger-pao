@@ -4,9 +4,7 @@ import argparse
 import matplotlib.pyplot as plt
 import matplotlib.dates as md
 import datetime
-# import sys
 import os
-# import math
 from time import strftime, localtime
 
 v_nom = 230.0
@@ -31,7 +29,9 @@ def utc2hms(utcSec):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("File")
+parser.add_argument("File", help="File you want to plot")
+parser.add_argument("-e", "--events", help="this option plots the events",
+                    action="store_true")
 args = parser.parse_args()
 
 with open(args.File, 'r') as File:
@@ -59,17 +59,9 @@ iN = []
 
 os.remove(args.File+'s')
 
+plotEvents = args.events
 
-plotEventsInput = raw_input("Plot events? (Y / [N])(Plotting events may take a long time...) \n ")
-
-# print plotEventsInput
-
-if (plotEventsInput.upper() == 'Y'):
-    plotEvents = True
-else:
-    plotEvents = False
-
-# print plotEvents
+print plotEvents
 
 for line in file:
     data = line.split()
