@@ -24,14 +24,20 @@ i_ylim_inf = 10.0
 
 
 def utc2hms(utcSec):
-    hms = strftime("%a %d/%m/%Y - %H:%M:%S", localtime(utcSec))
+    hms = strftime("%a %Y-%m-%d %H:%M:%S", localtime(utcSec))
     return hms
+
+def hms2seconds(hmsInput):
+    HH, MM, SS = hmsInput.split(':')
+    return int(HH)*3600+int(MM)*60+int(SS)
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument("File", help="File you want to plot")
-parser.add_argument("-e", "--events", help="this option plots the events",
+parser.add_argument("-e", "--events", help="this option plots the events (may take long time to finish)",
                     action="store_true")
+parser.add_argument("-f", "--From", help="Begin plot at [HH:MM:SS]")
+parser.add_argument("-t", "--To", help="End plot at [HH:MM:SS]")
 parser.add_argument("-r", "--resolution", type=int, 
                     help="Skip # data for faster plotting")
 args = parser.parse_args()
@@ -65,22 +71,46 @@ os.remove(args.File+'s')
 
 plotEvents = args.events
 
+setupFlag = 1
+
 for line in file:
     data = line.split()
-    if (((len(data) == 10) or (len(data) == 9)) or ((len(data) == 11) and plotEvents == True)):
-        x_uSec.append(float(data[0]))
-        x_Sec.append(float(data[0])/1000)
-        date_list = [datetime.datetime.fromtimestamp(ts) for ts in x_Sec]
-        vR.append(float(data[1]))
-        vS.append(float(data[2]))
-        vT.append(float(data[3]))
-        # iR.append(float(data[4]))
-        # iS.append(float(data[5]))
-        # iT.append(float(data[6]))
-        # iN.append(float(data[7]))
-        fr.append(float(data[8]))
+    # Setup:
+    if (setupFlag == 1):
+        firstSecondOfTheDay = int(data[0])/1000
+        #print firstSecondOfTheDay
+        if args.From:
+            From =  hms2seconds(args.From) + firstSecondOfTheDay
+        else:
+            From = 0
+
+        if args.To:
+            To =  hms2seconds(args.To) + firstSecondOfTheDay
+        else:
+            To = 999999999999
+
+        #print From, To
+        setupFlag = 0
     else:
-        pass
+        pass 
+
+
+    if ((int(data[0])/1000) >= From and (int(data[0])/1000) <= To):
+
+        if (((len(data) == 10) or (len(data) == 9)) or ((len(data) == 11) and plotEvents == True)):
+            x_uSec.append(float(data[0]))
+            x_Sec.append(float(data[0])/1000)
+            date_list = [datetime.datetime.fromtimestamp(ts) for ts in x_Sec]
+            vR.append(float(data[1]))
+            vS.append(float(data[2]))
+            vT.append(float(data[3]))
+            # iR.append(float(data[4]))
+            # iS.append(float(data[5]))
+            # iT.append(float(data[6]))
+            # iN.append(float(data[7]))
+            fr.append(float(data[8]))
+        else:
+            pass
 
 x_uSec.pop(0)
 x_Sec.pop(0)
