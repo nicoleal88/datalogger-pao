@@ -7,10 +7,5 @@
 + **syncFiles**: Sends the data to the server
 + **tri_line_datalogger_unified_v1**: Reads data from Arduino and saves it to a plain text file
 
-### Launch ###
-
-```
 python tri_line_datalogger_unified_v1.py
-```
 
-*Editing with Atom*

@@ -10,15 +10,32 @@ import os
 import glob
 import subprocess
 
+#Configure paths
+'''
+/home/USER
+/home/USER/datalogger/software
+/home/USER/datalogger/data
+'''
+userHome = os.getenv("HOME")
+softPath = userHome + '/datalogger/software/'
+dataPath = userHome + '/datalogger/data/'
+
 #Read configFile
 config = {}
-with open('configFile.cnf','r') as f:
+with open(softPath + 'configFile.conf','r') as f:
   File = f.readlines()
   for lines in File:
     splittedLine = lines.split('=')
     if len(splittedLine) == 2:
       config[splittedLine[0]] = splittedLine[1][:-1]
 
+building = config['BUILDING'] 
+
+#Make root folder
+try:
+  os.mkdir(dataPath+building)
+except:
+  pass
 
 #Parsing
 parser = argparse.ArgumentParser()
@@ -118,21 +135,12 @@ def getDataFromSerial(line):
     iN = iN_ADC * convFactor_iN
     
     global fr
-    #fr = 1250/(deltaN/10.00)) 
-    fr = 1000.0/((((deltaN/100.0)-5.0)+40)*0.5)
+    fr = 2000/((4608-deltaN)/102.4)
     #fr = deltaN
 
 def avgList(myList):
   return sum(myList) / float(len(myList))
 
-building = config['BUILDING'] 
-
-#Make folder
-try:
-  folder = building.upper()
-  os.mkdir(folder)
-except:
-  pass
 
 #Variables
 nzLast = 0
@@ -147,8 +155,8 @@ iTList = []
 iNList = []
 frList = []			#Frequency buffer list for events log
 
-timeBufferLength = 10000			#Amount of time saved in the buffers[ms]
-linePeriod = 20					#Line typical period [ms]
+timeBufferLength = 16000			#Amount of time saved in the buffers[ms]
+linePeriod = 32					#Line typical period [ms]
 listLength = timeBufferLength/linePeriod	#Buffer length (10 seconds, 10000ms)
 position = 100					#Position in buffer where events are detected
 dataDelay = (listLength) * linePeriod 		#(20 = 10000ms/500)
@@ -209,9 +217,23 @@ while True:
       #Log writing and Screen printing (Periodic data every Delay seconds)
       if (int(msTime) >= (int(msTimeLast) + (args.delay * 1000)) and vR > vNoiseFilter and vS > vNoiseFilter and vT > vNoiseFilter):
 
-        logInfo = "%.d \t %.2f \t %.2f \t %.2f \t %.2f \t %.2f \t %.2f \t %.2f \t %.2f \t %.d \n"  % (int(msTime), avgList(vRList), avgList(vSList), avgList(vTList), avgList(iRList), avgList(iSList), avgList(iTList), avgList(iNList), fr, event)
-        
-        logFilePath = folder + '/' + time.strftime("%Y-%m-%d") + '-' + building.upper() + '.tsv'
+        logInfo = "%.d \t %.2f \t %.2f \t %.2f \t %.2f \t %.2f \t %.2f \t %.2f \t %.2f \t %.d \n"  % (int(msTime), vRList[-1], vSList[-1], vTList[-1], iRList[-1], iSList[-1], iTList[-1], iNList[-1], fr, event)
+
+	#Make year folder
+	try:
+	  yearFolder = dataPath + building + '/' + time.strftime("%Y")
+	  os.mkdir(yearFolder)
+	except:
+	  pass#print 'Error making year folder'
+
+	#Make month folder
+	try:
+	  monthFolder = yearFolder + '/' + time.strftime("%m")
+	  os.mkdir(monthFolder)
+	except:
+	  pass#print 'Error making month folder'
+
+        logFilePath = monthFolder + '/' + time.strftime("%Y-%m-%d") + '-' + building.upper() + '.tsv'
 
         with open(logFilePath,'a') as f:
           f.write(logInfo)
@@ -236,7 +258,6 @@ while True:
       if printFlag == True and printN > 0:
         eventInfo = "%.d \t %.2f \t %.2f \t %.2f \t %.2f \t %.2f \t %.2f \t %.2f \t %.2f \t %.d \t %.d \n"  % ((int(msTime) - dataDelay), vRList[0], vSList[0], vTList[0], iRList[0], iSList[0], iTList[0], iNList[0], frList[0], event, printN)
 
-        logFilePath = folder + '/' + time.strftime("%Y-%m-%d") + '-' + building.upper() + '.tsv'
         with open(logFilePath,'a') as f:
           f.write(eventInfo)
         printN -= 1
